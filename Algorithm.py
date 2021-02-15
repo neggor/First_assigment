@@ -47,15 +47,19 @@ def result(board, action): # Update the board
 def eval(state):
     # In order to use the functions in hex
     # I create a temp object and add the state
-    
     TMP_board = HexBoard(size)
     TMP_board.board = state
-    if TMP_board.check_win(2):
-        return(1)
-    elif TMP_board.check_win(1):
-        return(-1)
-    else:
-        return(0)
+    if TMP_board.is_game_over():
+        if TMP_board.check_win(2):
+            return(1)
+        elif TMP_board.check_win(1):
+            return(-1)
+        else:
+            return(0)
+    # If eval is called before LEAF
+    else: ## TMP random evaluation
+        return(random.randit(-1,1))
+    
 
 
 ## TODO transposition table in order to make iterative deepening
@@ -63,9 +67,11 @@ def eval(state):
 ## Minimax implementation:
 # TODO ALPHA-BETA pruning
 
-def minimax(state): # Returns the value of the LEAF following optimal play for both players
+def minimax(state, alpha = -Inf , beta = Inf): # Returns the value of the LEAF following optimal play for both players 
+    # ALPHA-BETHA WIDE WINDOW (IMPROVE??)
     # In order to use the functions in hex
     # I create a temp object and add the state
+
     TMP_board = HexBoard(size)
     TMP_board.board = state
     #TMP_board.print()
@@ -76,8 +82,11 @@ def minimax(state): # Returns the value of the LEAF following optimal play for b
         if TMP_board.is_game_over() or sum([TMP_board.is_empty(x) for x in TMP_board.board]) == 0: # IF IT IS A LEAF
             return(eval(state))
         else:
-            for action in getMoveList(state):
-                value = max(value, minimax(result(state, action)))
+            for action in getMoveList(state): # Assessing a MAX NODE
+                value = max(value, minimax(result(state, action), alpha, beta))
+                alpha = max(value, alpha)
+                if alpha >= beta: # Because action is gonna have a reward as high as beta.
+                    break
             return(value)
                 
 
@@ -88,7 +97,10 @@ def minimax(state): # Returns the value of the LEAF following optimal play for b
             return(eval(state))   
         else:
             for action in getMoveList(state):
-                value = min(value, minimax(result(state, action)))
+                value = min(value, minimax(result(state, action), alpha, beta))
+                beta = min(value, beta)
+                if alpha >= beta: # Because the action is gonna have a reward as low as alpha
+                    break
             return(value)
     
 
@@ -100,7 +112,7 @@ def MakeMove(board, color):
 
         for action in getMoveList(state):
             print("Searching... : ", action)
-            U = max(Best_outcome, minimax(result(state, action)))
+            U = max(Best_outcome, minimax(result(state, action))) ## Default -inf inf window
             print(U)
             if U > Best_outcome:
                 Best_outcome = U
@@ -115,7 +127,7 @@ def MakeMove(board, color):
 
         for action in getMoveList(state):
             print("Searching... : ", action)
-            U = min(Best_outcome, minimax(result(state, action)))
+            U = min(Best_outcome, minimax(result(state, action))) ## Default -inf inf window
             print(U)
             if U < Best_outcome:
                 Best_outcome = U
