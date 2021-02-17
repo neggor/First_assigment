@@ -33,22 +33,49 @@ class AGENT:
         new_board[action] = self.player(new_board)
         return(new_board)
     
-    def Dijkstra(self, state):
+    def Dijkstra_heuristic(self, state):
         TMP_board = HexBoard(self.size)
-        TMP_board.board = state
-        #TODO
-        #For red player
-        univisted_set = set([x for x in state if state[x] != 1]) ## Unvisited are reds an empty
-
+        TMP_board.board = copy.deepcopy(state)
+        univisted_set = set([x for x in state if state[x] != 1])
+        min_distance_red = Inf
+        for initial in [x for x in univisted_set if x[1] == 0]:
+            for end in [x for x in univisted_set if x[1] == self.size - 1]:
+                visited = []
+                distance_red = self.Shortest_path(state, 2, initial, end, visited) 
+                if distance_red < min_distance_red:
+                    min_distance_red = distance_red
+        univisted_set = set([x for x in state if state[x] != 2]) 
+        min_distance_blue = Inf
         for initial in [x for x in univisted_set if x[0] == 0]:
-            for end in [x for x in univisted_set if x[1] == self.size - 1]: # All possible initial and end points
-                cost = 0
-                current_univisited_set = copy.deepcopy(univisted_set)
-                current = initial
-                objective = end
-
-
-
+            for end in [x for x in univisted_set if x[0] == self.size - 1]: 
+                visited = []
+                distance_blue = self.Shortest_path(state, 1, initial, end, visited) 
+                if distance_blue < min_distance_blue:
+                    min_distance_blue = distance_blue
+        heuristic_value = min_distance_blue - min_distance_red
+        return(heuristic_value)
+                    
+    def Shortest_path(self, state, color, initial, end, visited, steps = 0, min_distance = Inf):
+        TMP_board = HexBoard(self.size)
+        TMP_board.board = copy.deepcopy(state)
+        TMP_board.place(initial, color)
+        visited.append(initial)
+        available = [x for x in set([x for x in state if state[x] in (color, 3)]) if x not in visited]
+        if steps >= min_distance: 
+            return(Inf)
+        
+        if initial == end:
+            return(steps)
+        else:
+            if len([x for x in TMP_board.get_neighbors(initial) if x in available]) <= 0:
+                return(Inf) 
+            for neighbour in [x for x in TMP_board.get_neighbors(initial) if x in available]:
+                if TMP_board.get_color(neighbour) == color:
+                    min_distance = min(min_distance, self.Shortest_path(state, color, neighbour, end, visited, steps, min_distance))
+                elif TMP_board.get_color(neighbour) == 3:
+                    min_distance = min(min_distance, self.Shortest_path(state, color, neighbour, end, visited, steps + 1, min_distance)) 
+            return(min_distance)
+            
 
 
     def eval(self, state):
@@ -64,7 +91,7 @@ class AGENT:
         else:
             if self.heuristic:
                 print("Dijkstra")
-                #TODO
+                return(self.Dijkstra_heuristic(state))
             else:
                 print("Random")
                 return(random.uniform(-1,1))
@@ -99,7 +126,7 @@ class AGENT:
                             break
                     return(value)
         
-    def MakeMove(self, board, color): # Make a move using AI
+    def MakeMove(self, board, color): # Make a move using AI # FIXME
         state = copy.deepcopy(board.board)
         if color == 2:
             Best_outcome = -Inf
@@ -113,8 +140,9 @@ class AGENT:
                     Best_outcome = U
                     Best_move = action
             board.place(Best_move, color)
-            return(board.print())
-        
+            ### TODO change below
+            return(board.print()) ## In order to implement against another AI it has to actually return the board.
+            
         elif color == 1:
             Best_outcome = Inf
             Best_move = None
