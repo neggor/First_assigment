@@ -7,7 +7,7 @@ import time
 
 #### Global variables:
 size = 4
-deep = 2
+deep = 6
 my_board = HexBoard(size)
 all_positions = list(itertools.product(range(size), repeat= 2))
 moves = []
@@ -111,6 +111,7 @@ def eval(state):
     TMP_board = HexBoard(size)
     TMP_board.board = copy.deepcopy(state)
     if TMP_board.is_game_over() or sum([TMP_board.is_empty(x) for x in TMP_board.board]) == 0:
+        print("LEAF")
         if TMP_board.check_win(2):
             return(1)
         elif TMP_board.check_win(1):
